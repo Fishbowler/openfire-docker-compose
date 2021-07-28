@@ -136,6 +136,14 @@ The following MUC rooms are configured:
 The Docker compose file defines a custom bridge network with a single subnet (`172.50.0.0/24` for the federated
 configuration and `172.60.0.0/24` for the clustered).
 
+Additionally, an alternative network `172.70.0.0/24` is configured to move services to and from in cluster change
+scenarios. To move a node to and from the alternative network, use the `to-alt.sh` and `to-main.sh` scripts. E.g. to
+move node 3 from the main cluster network to the alternative network:
+
+```
+./to-alt.sh 3
+```
+
 ### Removing a node from the network
 
 To remove a node from the network run the following command:
