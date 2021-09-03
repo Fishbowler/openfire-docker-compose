@@ -11,12 +11,6 @@ else
 fi
 
 docker-compose -f $COMPOSE_FILE down
-cd ../Openfire
-mvn -U clean package
-docker build --tag openfire:localbuild .
-cd ../openfire-docker-compose
-#docker-compose -f $COMPOSE_FILE build
-docker-compose -f $COMPOSE_FILE pull
 
 # Clean up temporary persistence data
 rm -rf _data

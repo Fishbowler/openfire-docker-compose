@@ -1,0 +1,87 @@
+title This is a title
+
+participant Timeline
+participant ClusterManager
+
+participantgroup #lightgreen **Node 1**
+actor User1
+participant MUCServiceImpl1
+participant OccupantManager1
+end
+
+participantgroup #lightblue **Node 2**
+actor User2
+participant MUCServiceImpl2
+participant OccupantManager2
+end
+
+participantgroup #lightyellow **Node 3**
+actor User3
+participant MUCServiceImpl3
+participant OccupantManager3
+end
+
+note over MUCServiceImpl1,OccupantManager1:a84945af-b062-4014-87d6-ccb05ac0b91e
+note over MUCServiceImpl2,OccupantManager2:9ca72a7c-d51c-4a8b-b7e3-5b724df1bb23
+note over MUCServiceImpl3,OccupantManager3:2063d2ad-05c7-4d59-9394-d233b7d99093
+
+group #2f2e7b User 1 enters on node 1 at 11:20:20 #white
+
+User1->MUCServiceImpl1:processRoomJoinRequest
+MUCServiceImpl1->OccupantManager1:occupantJoined
+OccupantManager1->OccupantManager1:"A new occupant was\n added on Node 1"
+note over OccupantManager1:Occupants: 1
+
+ClusterManager->OccupantManager2:OccupantAddedTask.run() -> OccupantManager.process()
+OccupantManager2->OccupantManager2:"A new occupant was\n added on Node 1"
+note over OccupantManager2:Occupants: 1
+
+ClusterManager->OccupantManager3:OccupantAddedTask.run() -> OccupantManager.process()
+OccupantManager3->OccupantManager3:"A new occupant was\n added on Node 1"
+note over OccupantManager3:Occupants: 1
+
+end #group
+
+group #2f2e7b User 2 enters on node 2 at 11:21:40 #white
+
+User2->MUCServiceImpl2:processRoomJoinRequest
+MUCServiceImpl2->OccupantManager2:occupantJoined
+OccupantManager2->OccupantManager2:"A new occupant was\n added on Node 2"
+note over OccupantManager2:Occupants: 2
+
+ClusterManager->OccupantManager1:OccupantAddedTask.run() -> OccupantManager.process()
+OccupantManager1->OccupantManager1:"A new occupant was\n added on Node 2"
+note over OccupantManager1:Occupants: 2
+
+ClusterManager->OccupantManager3:OccupantAddedTask.run() -> OccupantManager.process()
+OccupantManager3->OccupantManager3:"A new occupant was\n added on Node 2"
+note over OccupantManager3:Occupants: 2
+
+end #group
+
+
+group #2f2e7b User 3 enters on node 3 at 11:23:00 #white
+
+User3->MUCServiceImpl3:processRoomJoinRequest
+MUCServiceImpl3->OccupantManager3:occupantJoined
+OccupantManager3->OccupantManager3:"A new occupant was\n added on Node 3"
+note over OccupantManager3:Occupants: 3
+
+ClusterManager->OccupantManager1:OccupantAddedTask.run() -> OccupantManager.process()
+OccupantManager1->OccupantManager1:"A new occupant was\n added on Node 3"
+note over OccupantManager1:Occupants: 3
+
+ClusterManager->OccupantManager2:OccupantAddedTask.run() -> OccupantManager.process()
+OccupantManager2->OccupantManager2:"A new occupant was\n added on Node 3"
+note over OccupantManager2:Occupants: 3
+
+end #group
+
+group #2f2e7b User 1 leaves room on node 1 at 11:25:00 #white
+
+User1->MUCServiceImpl1:processPresenceUpdate
+MUCServiceImpl1->OccupantManager1:occupantLeft
+OccupantManager1->OccupantManager1:"An occupant was\n removed on Node 1"
+note over OccupantManager1:Occupants: 2
+
+end

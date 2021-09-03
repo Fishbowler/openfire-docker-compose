@@ -1,0 +1,90 @@
+title Disconnect and reconnect with 3 nodes
+
+participant ClusterManager
+participant TaskExecutor
+participant Messages
+
+participant Node1#red
+lifelinestyle Node1 #red:4:solid
+participant Node2#yellow
+lifelinestyle Node2 #yellow:4:solid
+participant Node3#blue
+lifelinestyle Node3 #blue:4:solid
+
+entryspacing 1.2
+note over Node1:336e269b-554c-455c-a679-d21e81c16bc3
+note over Node2:SENIOR CLUSTER MEMBER
+note over Node2:3cb116ac-d07b-4af4-9c94-2faffd882028
+note over Node3:according to openfire\nf731a594-a518-484b-a05d-26a787260d7e
+note over Node3:according to hazel\n4b0de4fa-6026-4e17-8da0-7714fa6ba8a1\nand changing
+
+group #2f2e7b Node 3 is disconnected at 22:28:00 #white
+
+note over ClusterManager:22:29:14
+
+ClusterManager->Node1:leftCluster(node3)
+note over Node1:Occupants: 1/2
+
+TaskExecutor->Node1:OccupantRemovedTask
+note over Node1:Occupants: 1/2
+
+Messages->Node2:processPresenceUpdate
+note over Node2:Occupants: 1/2
+
+note over ClusterManager:22:29:19
+
+ClusterManager->Node3:leftCluster(node2)
+note over Node3:Occupants: 1/3
+ClusterManager->Node3:markedAsSeniorClusterMember
+note over Node3:Occupants: 1/3
+ClusterManager->Node3:leftCluster(node1)
+note over Node3:Occupants: 3
+
+end
+
+group #2f2e7b Node 3 is resconnected at 22:33:00 #white
+
+note over ClusterManager:22:33:30
+
+ClusterManager->Node1:joinedCluster(node3)
+note over Node1:Occupants: 1/2
+TaskExecutor->Node3:SyncLocalOccupantsAndSendJoinPresenceTask(from node1 1 occupant)
+note over Node3:Occupants: 3
+
+  ClusterManager->Node2:joinedCluster(node3)
+note over Node2:Occupants: 1/2
+TaskExecutor->Node3:SyncLocalOccupantsAndSendJoinPresenceTask(from node2 1 occupant)
+note over Node3:Occupants: 3
+
+ClusterManager->Node3:leftCluster(node3=self)
+note over Node3:Occupants: 3
+
+
+note over ClusterManager:22:33:31
+
+
+ClusterManager->Node3:joinedCluster(node3=self)
+note over Node3:Occupants: 3
+ClusterManager->Node3:joinedCluster(node1)
+note over Node3:Occupants: 3
+
+TaskExecutor->Node1:SyncLocalOccupantsAndSendJoinPresenceTask(from node3 1 occupant)
+note over Node1:Occupants: 1/2/3
+TaskExecutor->Node1:SyncLocalOccupantsAndSendJoinPresenceTask(from node3 1 occupant)
+note over Node1:Occupants: 1/2/3
+
+TaskExecutor->Node2:SyncLocalOccupantsAndSendJoinPresenceTask(from node3 1 occupant)
+note over Node2:Occupants: 1/2/3
+
+note over ClusterManager:22:33:48
+
+Messages->Node2:processPresenceUpdate
+Node2->Node2:leaveRoom(node2)
+note over Node2:Occupants: 1/3
+
+TaskExecutor->Node1:OccupantRemovedTask(node2)
+note over Node1:Occupants: 1/3
+TaskExecutor->Node3:OccupantRemovedTask(node2)
+note over Node3:Occupants: 3
+
+end

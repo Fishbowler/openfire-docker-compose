@@ -28,6 +28,14 @@ services:
       openfire-clustered-net:
         ipv4_address: 172.60.0.99
   
+#  hmc:
+#    image: hazelcast/management-center
+#    ports:
+#      - "9998:8080"
+#    networks:
+#      openfire-clustered-net:
+#        ipv4_address: 172.60.0.98
+
   xmpp1:
     image: "openfire:${OPENFIRE_TAG}"
     ports:
