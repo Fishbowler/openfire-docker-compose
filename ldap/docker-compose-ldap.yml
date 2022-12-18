@@ -1,0 +1,102 @@
+version: '3.7'
+
+services:
+
+  db1:
+    image: library/postgres:9.6.24-alpine
+    ports:
+      - "5431:5432"
+    environment:
+      - "POSTGRES_DB=openfire"
+      - "POSTGRES_USER=openfire"
+      - "POSTGRES_PASSWORD=hunter2"
+    volumes:
+      - ./sql:/docker-entrypoint-initdb.d
+    networks:
+      openfire-net:
+        ipv4_address: 172.70.0.11
+
+  xmpp1:
+    image: "openfire:${OPENFIRE_TAG}"
+    ports:
+      - "5222:5222"
+      - "5269:5269"
+      - "7070:7070"
+      - "7443:7443"
+      - "9090:9090"
+    depends_on:
+      - "db1"
+      - "ldap"
+    volumes:
+      - ./_data/xmpp/conf:/var/lib/openfire/conf
+      - ./_data/plugins:/opt/plugins
+      - ../_common/wait-for-it.sh:/wait-for-it.sh
+    command: ["/wait-for-it.sh", "-s", "db1:5432", "--", "/sbin/entrypoint.sh"]
+    networks:
+      openfire-net:
+        ipv4_address: 172.70.0.10
+    extra_hosts:
+      - "xmpp.localhost.example:172.70.0.10"
+      - "conference.xmpp.localhost.example:172.70.0.10"
+  
+  ldap:
+    image: osixia/openldap:1.5.0
+    command: --copy-service --loglevel debug
+    environment:
+      - LDAP_LOG_LEVEL=256
+      - LDAP_ORGANISATION=Ignite Realtime Test Org.
+      - LDAP_DOMAIN=test.igniterealtime.org
+      - LDAP_BASE_DN=dc=test,dc=igniterealtime,dc=org
+      - LDAP_ADMIN_PASSWORD=hunter2
+      - LDAP_READONLY_USER=true
+      - LDAP_READONLY_USER_USERNAME=readonly
+      - LDAP_READONLY_USER_PASSWORD=readonly
+      - LDAP_TLS=true
+      - LDAP_TLS_CRT_FILENAME=ldap.crt
+      - LDAP_TLS_KEY_FILENAME=ldap.key
+      - LDAP_TLS_DH_PARAM_FILENAME=dhparam.pem
+      - LDAP_TLS_CA_CRT_FILENAME=ca.crt
+      - LDAP_TLS_ENFORCE=false
+      - LDAP_TLS_CIPHER_SUITE=SECURE256:-VERS-SSL3.0
+      - LDAP_TLS_VERIFY_CLIENT=demand
+      - KEEP_EXISTING_CONFIG=false
+      - LDAP_REMOVE_CONFIG_AFTER_SETUP=false
+      - LDAP_SSL_HELPER_PREFIX=ldap
+      - LDAP_RFC2307BIS_SCHEMA=true
+    ports:
+      - "389:389"
+      - "636:636"
+    volumes:
+      - './_data/ldap_data:/container/service/slapd/assets/config/bootstrap/ldif/custom'
+    networks:
+      openfire-net:
+        ipv4_address: 172.70.0.12
+  
+  phpldapadmin:
+    image: osixia/phpldapadmin:latest
+    environment:
+      PHPLDAPADMIN_LDAP_HOSTS: "ldap"
+      PHPLDAPADMIN_HTTPS: "false"
+    ports:
+      - "8080:80"
+    depends_on:
+      - ldap
+    networks:
+      openfire-net:
+        ipv4_address: 172.70.0.13
+
+  dozzle:
+    image: amir20/dozzle:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 9999:8080
+ 
+networks:
+  openfire-net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.70.0.0/24
+

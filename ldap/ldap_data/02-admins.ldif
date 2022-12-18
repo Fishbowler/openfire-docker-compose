@@ -1,0 +1,13 @@
+version: 1
+
+dn: cn=Openfire Admin,dc=test,dc=igniterealtime,dc=org
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+cn: Openfire Admin
+sn: Admin
+description: The Openfire Admin
+title: Administrator of Openfire
+userPassword: admin
+uid: openfireadmin

@@ -1,0 +1,13 @@
+version: 1
+
+dn: cn=Everyone Group,dc=test,dc=igniterealtime,dc=org
+objectClass: top
+objectClass: posixGroup
+objectClass: groupOfMembers
+gidNumber: 101
+
+dn: cn=Empty Group,dc=test,dc=igniterealtime,dc=org
+objectClass: top
+objectClass: posixGroup
+objectClass: groupOfMembers
+gidNumber: 102

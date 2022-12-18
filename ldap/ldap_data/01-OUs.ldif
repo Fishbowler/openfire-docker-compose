@@ -1,0 +1,51 @@
+version: 1
+
+dn: ou=Accounting,dc=test,dc=igniterealtime,dc=org
+ou: Accounting
+objectClass: top
+objectClass: organizationalUnit
+
+dn: ou=Product Development,dc=test,dc=igniterealtime,dc=org
+ou: Product Development
+objectClass: top
+objectClass: organizationalUnit
+
+dn: ou=Product Testing,dc=test,dc=igniterealtime,dc=org
+ou: Product Testing
+objectClass: top
+objectClass: organizationalUnit
+
+dn: ou=Human Resources,dc=test,dc=igniterealtime,dc=org
+ou: Human Resources
+objectClass: top
+objectClass: organizationalUnit
+
+dn: ou=Payroll,dc=test,dc=igniterealtime,dc=org
+ou: Payroll
+objectClass: top
+objectClass: organizationalUnit
+
+dn: ou=Janitorial,dc=test,dc=igniterealtime,dc=org
+ou: Janitorial
+objectClass: top
+objectClass: organizationalUnit
+
+dn: ou=Management,dc=test,dc=igniterealtime,dc=org
+ou: Management
+objectClass: top
+objectClass: organizationalUnit
+
+dn: ou=Administrative,dc=test,dc=igniterealtime,dc=org
+ou: Administrative
+objectClass: top
+objectClass: organizationalUnit
+
+dn: ou=Peons,dc=test,dc=igniterealtime,dc=org
+ou: Peons
+objectClass: top
+objectClass: organizationalUnit
+
+dn: ou=Planning,dc=test,dc=igniterealtime,dc=org
+ou: Planning
+objectClass: top
+objectClass: organizationalUnit
