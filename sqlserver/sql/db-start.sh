@@ -27,8 +27,7 @@
 for i in {1..50};
 do
     /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$SA_PASSWORD" -d master -Q "CREATE DATABASE openfire;"
-    #/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$SA_PASSWORD" -d openfire -i /tmp/openfiredb/openfire_sqlserver.sql
-    #/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$SA_PASSWORD" -d openfire -i /tmp/openfiredb/openfire_data.sql
+    /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P $SA_PASSWORD -d openfire -i /scripts/openfire.sql
     if [ $? -eq 0 ]
     then
         echo "Openfire database created in SQL Server"

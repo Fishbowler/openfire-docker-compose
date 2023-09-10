@@ -1,1256 +1,468 @@
---
--- PostgreSQL database dump
---
 
--- Dumped from database version 9.6.17
--- Dumped by pg_dump version 9.6.17
-
-SET statement_timeout = 0;
-SET lock_timeout = 0;
-SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'UTF8';
-SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', '', false);
-SET check_function_bodies = false;
-SET xmloption = content;
-SET client_min_messages = warning;
-SET row_security = off;
-
---
--- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: 
---
-
-CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
+CREATE TABLE ofUser (
+  username              NVARCHAR(64)    NOT NULL,
+  storedKey             VARCHAR(32),
+  serverKey             VARCHAR(32),
+  salt                  VARCHAR(32),
+  iterations            INTEGER,
+  plainPassword         NVARCHAR(32),
+  encryptedPassword     NVARCHAR(255),
+  name                  NVARCHAR(100),
+  email                 VARCHAR(100),
+  creationDate          CHAR(15)        NOT NULL,
+  modificationDate      CHAR(15)        NOT NULL,
+  CONSTRAINT ofUser_pk PRIMARY KEY (username)
+);
+CREATE INDEX ofUser_cDate_idx ON ofUser (creationDate ASC);
 
 
---
--- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: 
---
-
-COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
-
-
-SET default_tablespace = '';
-
-SET default_with_oids = false;
-
---
--- Name: ofextcomponentconf; Type: TABLE; Schema: public; Owner: openfire
---
-
-CREATE TABLE public.ofextcomponentconf (
-    subdomain character varying(255) NOT NULL,
-    wildcard integer NOT NULL,
-    secret character varying(255),
-    permission character varying(10) NOT NULL
+CREATE TABLE ofUserProp (
+  username              NVARCHAR(64)    NOT NULL,
+  name                  NVARCHAR(100)   NOT NULL,
+  propValue             NVARCHAR(2000)  NOT NULL,
+  CONSTRAINT ofUserProp_pk PRIMARY KEY (username, name)
 );
 
 
-ALTER TABLE public.ofextcomponentconf OWNER TO openfire;
+CREATE TABLE ofUserFlag (
+  username              NVARCHAR(64)    NOT NULL,
+  name                  NVARCHAR(100)   NOT NULL,
+  startTime             CHAR(15),
+  endTime               CHAR(15),
+  CONSTRAINT ofUserFlag_pk PRIMARY KEY (username, name)
+);
+CREATE INDEX ofUserFlag_sTime_idx ON ofUserFlag (startTime ASC);
+CREATE INDEX ofUserFlag_eTime_idx ON ofUserFlag (endTime ASC);
 
---
--- Name: ofgroup; Type: TABLE; Schema: public; Owner: openfire
---
 
-CREATE TABLE public.ofgroup (
-    groupname character varying(50) NOT NULL,
-    description character varying(255)
+CREATE TABLE ofOffline (
+  username              NVARCHAR(64)    NOT NULL,
+  messageID             INTEGER         NOT NULL,
+  creationDate          CHAR(15)        NOT NULL,
+  messageSize           INTEGER         NOT NULL,
+  stanza                NTEXT           NOT NULL,
+  CONSTRAINT ofOffline_pk PRIMARY KEY (username, messageID)
 );
 
 
-ALTER TABLE public.ofgroup OWNER TO openfire;
-
---
--- Name: ofgroupprop; Type: TABLE; Schema: public; Owner: openfire
---
-
-CREATE TABLE public.ofgroupprop (
-    groupname character varying(50) NOT NULL,
-    name character varying(100) NOT NULL,
-    propvalue text NOT NULL
+CREATE TABLE ofPresence (
+  username              NVARCHAR(64)     NOT NULL,
+  offlinePresence       NTEXT,
+  offlineDate           CHAR(15)     NOT NULL,
+  CONSTRAINT ofPresence_pk PRIMARY KEY (username)
 );
 
 
-ALTER TABLE public.ofgroupprop OWNER TO openfire;
+CREATE TABLE ofRoster (
+  rosterID              INTEGER         NOT NULL,
+  username              NVARCHAR(64)    NOT NULL,
+  jid                   NVARCHAR(1024)  NOT NULL,
+  sub                   INTEGER         NOT NULL,
+  ask                   INTEGER         NOT NULL,
+  recv                  INTEGER         NOT NULL,
+  nick                  NVARCHAR(255),
+  stanza                NTEXT,
+  CONSTRAINT ofRoster_pk PRIMARY KEY (rosterID)
+);
+CREATE INDEX ofRoster_username_idx ON ofRoster (username ASC);
+CREATE INDEX ofRoster_jid_idx ON ofRoster (jid ASC);
 
---
--- Name: ofgroupuser; Type: TABLE; Schema: public; Owner: openfire
---
 
-CREATE TABLE public.ofgroupuser (
-    groupname character varying(50) NOT NULL,
-    username character varying(100) NOT NULL,
-    administrator integer NOT NULL
+CREATE TABLE ofRosterGroups (
+  rosterID              INTEGER         NOT NULL,
+  rank                  INTEGER         NOT NULL,
+  groupName             NVARCHAR(255)   NOT NULL,
+  CONSTRAINT ofRosterGroups_pk PRIMARY KEY (rosterID, rank)
+);
+CREATE INDEX ofRosterGroups_rosterid_idx ON ofRosterGroups (rosterID ASC);
+ALTER TABLE ofRosterGroups ADD CONSTRAINT ofRosterGroups_rosterID_fk FOREIGN KEY (rosterID) REFERENCES ofRoster;
+
+
+CREATE TABLE ofVCard (
+  username              NVARCHAR(64)    NOT NULL,
+  vcard                 NTEXT           NOT NULL,
+  CONSTRAINT ofVCard_pk PRIMARY KEY (username)
 );
 
 
-ALTER TABLE public.ofgroupuser OWNER TO openfire;
-
---
--- Name: ofid; Type: TABLE; Schema: public; Owner: openfire
---
-
-CREATE TABLE public.ofid (
-    idtype integer NOT NULL,
-    id integer NOT NULL
+CREATE TABLE ofGroup (
+  groupName             NVARCHAR(50)   NOT NULL,
+  description           NVARCHAR(255),
+  CONSTRAINT ofGroup_pk PRIMARY KEY (groupName)
 );
 
 
-ALTER TABLE public.ofid OWNER TO openfire;
-
---
--- Name: ofmucaffiliation; Type: TABLE; Schema: public; Owner: openfire
---
-
-CREATE TABLE public.ofmucaffiliation (
-    roomid integer NOT NULL,
-    jid character varying(1024) NOT NULL,
-    affiliation integer NOT NULL
+CREATE TABLE ofGroupProp (
+   groupName            NVARCHAR(50)   NOT NULL,
+   name                 NVARCHAR(100)   NOT NULL,
+   propValue            NVARCHAR(2000)  NOT NULL,
+   CONSTRAINT ofGroupProp_pk PRIMARY KEY (groupName, name)
 );
 
 
-ALTER TABLE public.ofmucaffiliation OWNER TO openfire;
-
---
--- Name: ofmucconversationlog; Type: TABLE; Schema: public; Owner: openfire
---
-
-CREATE TABLE public.ofmucconversationlog (
-    roomid integer NOT NULL,
-    messageid integer NOT NULL,
-    sender character varying(1024) NOT NULL,
-    nickname character varying(255),
-    logtime character(15) NOT NULL,
-    subject character varying(255),
-    body text,
-    stanza text
+CREATE TABLE ofGroupUser (
+  groupName             NVARCHAR(50)    NOT NULL,
+  username              NVARCHAR(100)   NOT NULL,
+  administrator         INTEGER         NOT NULL,
+  CONSTRAINT ofGroupUser_pk PRIMARY KEY (groupName, username, administrator)
 );
 
 
-ALTER TABLE public.ofmucconversationlog OWNER TO openfire;
-
---
--- Name: ofmucmember; Type: TABLE; Schema: public; Owner: openfire
---
-
-CREATE TABLE public.ofmucmember (
-    roomid integer NOT NULL,
-    jid character varying(1024) NOT NULL,
-    nickname character varying(255),
-    firstname character varying(100),
-    lastname character varying(100),
-    url character varying(100),
-    email character varying(100),
-    faqentry character varying(100)
+CREATE TABLE ofID (
+  idType                INTEGER         NOT NULL,
+  id                    INTEGER         NOT NULL,
+  CONSTRAINT ofID_pk PRIMARY KEY (idType)
 );
 
 
-ALTER TABLE public.ofmucmember OWNER TO openfire;
-
---
--- Name: ofmucroom; Type: TABLE; Schema: public; Owner: openfire
---
-
-CREATE TABLE public.ofmucroom (
-    serviceid integer NOT NULL,
-    roomid integer NOT NULL,
-    creationdate character(15) NOT NULL,
-    modificationdate character(15) NOT NULL,
-    name character varying(50) NOT NULL,
-    naturalname character varying(255) NOT NULL,
-    description character varying(255),
-    lockeddate character(15) NOT NULL,
-    emptydate character(15),
-    canchangesubject integer NOT NULL,
-    maxusers integer NOT NULL,
-    publicroom integer NOT NULL,
-    moderated integer NOT NULL,
-    membersonly integer NOT NULL,
-    caninvite integer NOT NULL,
-    roompassword character varying(50),
-    candiscoverjid integer NOT NULL,
-    logenabled integer NOT NULL,
-    subject character varying(100),
-    rolestobroadcast integer NOT NULL,
-    usereservednick integer NOT NULL,
-    canchangenick integer NOT NULL,
-    canregister integer NOT NULL,
-    allowpm integer,
-    fmucenabled integer,
-    fmucoutboundnode text,
-    fmucoutboundmode integer,
-    fmucinboundnodes text
+CREATE TABLE ofProperty (
+  name        NVARCHAR(100) NOT NULL,
+  propValue   NTEXT NOT NULL,
+  encrypted   INTEGER,
+  iv          CHAR(24),
+  CONSTRAINT ofProperty_pk PRIMARY KEY (name)
 );
 
 
-ALTER TABLE public.ofmucroom OWNER TO openfire;
-
---
--- Name: ofmucroomprop; Type: TABLE; Schema: public; Owner: openfire
---
-
-CREATE TABLE public.ofmucroomprop (
-    roomid integer NOT NULL,
-    name character varying(100) NOT NULL,
-    propvalue text NOT NULL
+CREATE TABLE ofVersion (
+  name     NVARCHAR(50) NOT NULL,
+  version  INTEGER  NOT NULL,
+  CONSTRAINT ofVersion_pk PRIMARY KEY (name)
 );
 
-
-ALTER TABLE public.ofmucroomprop OWNER TO openfire;
-
---
--- Name: ofmucservice; Type: TABLE; Schema: public; Owner: openfire
---
-
-CREATE TABLE public.ofmucservice (
-    serviceid integer NOT NULL,
-    subdomain character varying(255) NOT NULL,
-    description character varying(255),
-    ishidden integer NOT NULL
+CREATE TABLE ofExtComponentConf (
+  subdomain             NVARCHAR(255)    NOT NULL,
+  wildcard              INT              NOT NULL,
+  secret                NVARCHAR(255),
+  permission            NVARCHAR(10)     NOT NULL,
+  CONSTRAINT ofExtComponentConf_pk PRIMARY KEY (subdomain)
 );
 
-
-ALTER TABLE public.ofmucservice OWNER TO openfire;
-
---
--- Name: ofmucserviceprop; Type: TABLE; Schema: public; Owner: openfire
---
-
-CREATE TABLE public.ofmucserviceprop (
-    serviceid integer NOT NULL,
-    name character varying(100) NOT NULL,
-    propvalue text NOT NULL
+CREATE TABLE ofRemoteServerConf (
+  xmppDomain            NVARCHAR(255)    NOT NULL,
+  remotePort            INTEGER,
+  permission            NVARCHAR(10)     NOT NULL,
+  CONSTRAINT ofRemoteServerConf_pk PRIMARY KEY (xmppDomain)
 );
 
+CREATE TABLE ofPrivacyList (
+  username              NVARCHAR(64)    NOT NULL,
+  name                  NVARCHAR(100)   NOT NULL,
+  isDefault             INT             NOT NULL,
+  list                  NTEXT           NOT NULL,
+  CONSTRAINT ofPrivacyList_pk PRIMARY KEY (username, name)
+);
+CREATE INDEX ofPrivacyList_default_idx ON ofPrivacyList (username, isDefault);
 
-ALTER TABLE public.ofmucserviceprop OWNER TO openfire;
-
---
--- Name: ofoffline; Type: TABLE; Schema: public; Owner: openfire
---
-
-CREATE TABLE public.ofoffline (
-    username character varying(64) NOT NULL,
-    messageid integer NOT NULL,
-    creationdate character(15) NOT NULL,
-    messagesize integer NOT NULL,
-    stanza text NOT NULL
+CREATE TABLE ofSASLAuthorized (
+  username        NVARCHAR(64)     NOT NULL,
+  principal       NVARCHAR(2000)   NOT NULL,
+  CONSTRAINT ofSASLAuthorized_pk PRIMARY KEY (username, principal)
 );
 
+CREATE TABLE ofSecurityAuditLog (
+  msgID                 INTEGER         NOT NULL,
+  username              NVARCHAR(64)    NOT NULL,
+  entryStamp            BIGINT          NOT NULL,
+  summary               NVARCHAR(255)   NOT NULL,
+  node                  NVARCHAR(255)   NOT NULL,
+  details               NTEXT,
+  CONSTRAINT ofSecurityAuditLog_pk PRIMARY KEY (msgID)
+);
+CREATE INDEX ofSecurityAuditLog_tstamp_idx ON ofSecurityAuditLog (entryStamp);
+CREATE INDEX ofSecurityAuditLog_uname_idx ON ofSecurityAuditLog (username);
 
-ALTER TABLE public.ofoffline OWNER TO openfire;
+/* MUC Tables */
 
---
--- Name: ofpresence; Type: TABLE; Schema: public; Owner: openfire
---
+CREATE TABLE ofMucService (
+  serviceID           INT           NOT NULL,
+  subdomain           NVARCHAR(255) NOT NULL,
+  description         NVARCHAR(255),
+  isHidden            INT           NOT NULL,
+  CONSTRAINT ofMucService_pk PRIMARY KEY (subdomain)
+);
+CREATE INDEX ofMucService_serviceid_idx ON ofMucService(serviceID);
 
-CREATE TABLE public.ofpresence (
-    username character varying(64) NOT NULL,
-    offlinepresence text,
-    offlinedate character varying(15) NOT NULL
+CREATE TABLE ofMucServiceProp (
+  serviceID           INT           NOT NULL,
+  name                NVARCHAR(100) NOT NULL,
+  propValue           NVARCHAR(2000) NOT NULL,
+  CONSTRAINT ofMucServiceProp_pk PRIMARY KEY (serviceID, name)
 );
 
+CREATE TABLE ofMucRoom (
+  serviceID           INT           NOT NULL,
+  roomID              INT           NOT NULL,
+  creationDate        CHAR(15)      NOT NULL,
+  modificationDate    CHAR(15)      NOT NULL,
+  name                NVARCHAR(50)  NOT NULL,
+  naturalName         NVARCHAR(255) NOT NULL,
+  description         NVARCHAR(255),
+  lockedDate          CHAR(15)      NOT NULL,
+  emptyDate           CHAR(15)      NULL,
+  canChangeSubject    INT           NOT NULL,
+  maxUsers            INT           NOT NULL,
+  publicRoom          INT           NOT NULL,
+  moderated           INT           NOT NULL,
+  membersOnly         INT           NOT NULL,
+  canInvite           INT           NOT NULL,
+  roomPassword        NVARCHAR(50)  NULL,
+  canDiscoverJID      INT           NOT NULL,
+  logEnabled          INT           NOT NULL,
+  subject             NVARCHAR(100) NULL,
+  rolesToBroadcast    INT           NOT NULL,
+  useReservedNick     INT           NOT NULL,
+  canChangeNick       INT           NOT NULL,
+  canRegister         INT           NOT NULL,
+  allowpm             INT           NULL,
+  fmucEnabled         INT           NULL,
+  fmucOutboundNode    NVARCHAR(255) NULL,
+  fmucOutboundMode    INT           NULL,
+  fmucInboundNodes    NVARCHAR(2000) NULL,
+  CONSTRAINT ofMucRoom_pk PRIMARY KEY (serviceID, name)
+);
+CREATE INDEX ofMucRoom_roomid_idx on ofMucRoom(roomID);
+CREATE INDEX ofMucRoom_serviceid_idx on ofMucRoom(serviceID);
 
-ALTER TABLE public.ofpresence OWNER TO openfire;
-
---
--- Name: ofprivacylist; Type: TABLE; Schema: public; Owner: openfire
---
-
-CREATE TABLE public.ofprivacylist (
-    username character varying(64) NOT NULL,
-    name character varying(100) NOT NULL,
-    isdefault integer NOT NULL,
-    list text NOT NULL
+CREATE TABLE ofMucRoomProp (
+  roomID                INT             NOT NULL,
+  name                  NVARCHAR(100)   NOT NULL,
+  propValue             NVARCHAR(2000)  NOT NULL,
+  CONSTRAINT ofMucRoomProp_pk PRIMARY KEY (roomID, name)
 );
 
-
-ALTER TABLE public.ofprivacylist OWNER TO openfire;
-
---
--- Name: ofproperty; Type: TABLE; Schema: public; Owner: openfire
---
-
-CREATE TABLE public.ofproperty (
-    name character varying(100) NOT NULL,
-    propvalue character varying(4000) NOT NULL,
-    encrypted integer,
-    iv character(24)
+CREATE TABLE ofMucAffiliation (
+  roomID              INT            NOT NULL,
+  jid                 NVARCHAR(424) NOT NULL,
+  affiliation         INT            NOT NULL,
+  CONSTRAINT ofMucAffiliation_pk PRIMARY KEY (roomID,jid)
 );
 
-
-ALTER TABLE public.ofproperty OWNER TO openfire;
-
---
--- Name: ofpubsubaffiliation; Type: TABLE; Schema: public; Owner: openfire
---
-
-CREATE TABLE public.ofpubsubaffiliation (
-    serviceid character varying(100) NOT NULL,
-    nodeid character varying(100) NOT NULL,
-    jid character varying(1024) NOT NULL,
-    affiliation character varying(10) NOT NULL
+CREATE TABLE ofMucMember (
+  roomID              INT            NOT NULL,
+  jid                 NVARCHAR(424)  NOT NULL,
+  nickname            NVARCHAR(255)  NULL,
+  firstName           NVARCHAR(100)  NULL,
+  lastName            NVARCHAR(100)  NULL,
+  url                 NVARCHAR(100)  NULL,
+  email               NVARCHAR(100)  NULL,
+  faqentry            NVARCHAR(100)  NULL,
+  CONSTRAINT ofMucMember_pk PRIMARY KEY (roomID,jid)
 );
 
+CREATE TABLE ofMucConversationLog (
+  roomID              INT            NOT NULL,
+  messageID         INT           NOT NULL,
+  sender              NVARCHAR(1024) NOT NULL,
+  nickname            NVARCHAR(255)  NULL,
+  logTime             CHAR(15)       NOT NULL,
+  subject             NVARCHAR(255)  NULL,
+  body                NTEXT          NULL,
+  stanza                NTEXT          NULL
+);
+CREATE INDEX ofMucConversationLog_roomtime_idx ON ofMucConversationLog (roomID, logTime);
+CREATE INDEX ofMucConversationLog_time_idx ON ofMucConversationLog (logTime);
+CREATE INDEX ofMucConversationLog_msg_id ON ofMucConversationLog (messageID);
 
-ALTER TABLE public.ofpubsubaffiliation OWNER TO openfire;
+/* PubSub Tables */
 
---
--- Name: ofpubsubdefaultconf; Type: TABLE; Schema: public; Owner: openfire
---
-
-CREATE TABLE public.ofpubsubdefaultconf (
-    serviceid character varying(100) NOT NULL,
-    leaf integer NOT NULL,
-    deliverpayloads integer NOT NULL,
-    maxpayloadsize integer NOT NULL,
-    persistitems integer NOT NULL,
-    maxitems integer NOT NULL,
-    notifyconfigchanges integer NOT NULL,
-    notifydelete integer NOT NULL,
-    notifyretract integer NOT NULL,
-    presencebased integer NOT NULL,
-    senditemsubscribe integer NOT NULL,
-    publishermodel character varying(15) NOT NULL,
-    subscriptionenabled integer NOT NULL,
-    accessmodel character varying(10) NOT NULL,
-    language character varying(255),
-    replypolicy character varying(15),
-    associationpolicy character varying(15) NOT NULL,
-    maxleafnodes integer NOT NULL
+CREATE TABLE ofPubsubNode (
+  serviceID           NVARCHAR(100)  NOT NULL,
+  nodeID              NVARCHAR(100)  NOT NULL,
+  leaf                INT            NOT NULL,
+  creationDate        CHAR(15)       NOT NULL,
+  modificationDate    CHAR(15)       NOT NULL,
+  parent              NVARCHAR(100)  NULL,
+  deliverPayloads     INT            NOT NULL,
+  maxPayloadSize      INT            NULL,
+  persistItems        INT            NULL,
+  maxItems            INT            NULL,
+  notifyConfigChanges INT            NOT NULL,
+  notifyDelete        INT            NOT NULL,
+  notifyRetract       INT            NOT NULL,
+  presenceBased       INT            NOT NULL,
+  sendItemSubscribe   INT            NOT NULL,
+  publisherModel      NVARCHAR(15)   NOT NULL,
+  subscriptionEnabled INT            NOT NULL,
+  configSubscription  INT            NOT NULL,
+  accessModel         NVARCHAR(10)   NOT NULL,
+  payloadType         NVARCHAR(100)  NULL,
+  bodyXSLT            NVARCHAR(100)  NULL,
+  dataformXSLT        NVARCHAR(100)  NULL,
+  creator             NVARCHAR(255)  NOT NULL,
+  description         NVARCHAR(255)  NULL,
+  language            NVARCHAR(255)  NULL,
+  name                NVARCHAR(50)   NULL,
+  replyPolicy         NVARCHAR(15)   NULL,
+  associationPolicy   NVARCHAR(15)   NULL,
+  maxLeafNodes        INT            NULL,
+  CONSTRAINT ofPubsubNode_pk PRIMARY KEY (serviceID, nodeID)
 );
 
-
-ALTER TABLE public.ofpubsubdefaultconf OWNER TO openfire;
-
---
--- Name: ofpubsubitem; Type: TABLE; Schema: public; Owner: openfire
---
-
-CREATE TABLE public.ofpubsubitem (
-    serviceid character varying(100) NOT NULL,
-    nodeid character varying(100) NOT NULL,
-    id character varying(100) NOT NULL,
-    jid character varying(1024) NOT NULL,
-    creationdate character(15) NOT NULL,
-    payload text
+CREATE TABLE ofPubsubNodeJIDs (
+  serviceID           NVARCHAR(100)  NOT NULL,
+  nodeID              NVARCHAR(100)  NOT NULL,
+  jid                 NVARCHAR(250) NOT NULL,
+  associationType     NVARCHAR(20)   NOT NULL,
+  CONSTRAINT ofPubsubNodeJIDs_pk PRIMARY KEY (serviceID, nodeID, jid)
 );
 
+CREATE TABLE ofPubsubNodeGroups (
+  serviceID           NVARCHAR(100)  NOT NULL,
+  nodeID              NVARCHAR(100)  NOT NULL,
+  rosterGroup         NVARCHAR(100)  NOT NULL
+);
+CREATE INDEX ofPubsubNodeGroups_idx ON ofPubsubNodeGroups (serviceID, nodeID);
 
-ALTER TABLE public.ofpubsubitem OWNER TO openfire;
-
---
--- Name: ofpubsubnode; Type: TABLE; Schema: public; Owner: openfire
---
-
-CREATE TABLE public.ofpubsubnode (
-    serviceid character varying(100) NOT NULL,
-    nodeid character varying(100) NOT NULL,
-    leaf integer NOT NULL,
-    creationdate character(15) NOT NULL,
-    modificationdate character(15) NOT NULL,
-    parent character varying(100),
-    deliverpayloads integer NOT NULL,
-    maxpayloadsize integer,
-    persistitems integer,
-    maxitems integer,
-    notifyconfigchanges integer NOT NULL,
-    notifydelete integer NOT NULL,
-    notifyretract integer NOT NULL,
-    presencebased integer NOT NULL,
-    senditemsubscribe integer NOT NULL,
-    publishermodel character varying(15) NOT NULL,
-    subscriptionenabled integer NOT NULL,
-    configsubscription integer NOT NULL,
-    accessmodel character varying(10) NOT NULL,
-    payloadtype character varying(100),
-    bodyxslt character varying(100),
-    dataformxslt character varying(100),
-    creator character varying(1024) NOT NULL,
-    description character varying(255),
-    language character varying(255),
-    name character varying(50),
-    replypolicy character varying(15),
-    associationpolicy character varying(15),
-    maxleafnodes integer
+CREATE TABLE ofPubsubAffiliation (
+  serviceID           NVARCHAR(100)  NOT NULL,
+  nodeID              NVARCHAR(100)  NOT NULL,
+  jid                 NVARCHAR(250)  NOT NULL,
+  affiliation         NVARCHAR(10)   NOT NULL,
+  CONSTRAINT ofPubsubAffiliation_pk PRIMARY KEY (serviceID, nodeID, jid)
 );
 
-
-ALTER TABLE public.ofpubsubnode OWNER TO openfire;
-
---
--- Name: ofpubsubnodegroups; Type: TABLE; Schema: public; Owner: openfire
---
-
-CREATE TABLE public.ofpubsubnodegroups (
-    serviceid character varying(100) NOT NULL,
-    nodeid character varying(100) NOT NULL,
-    rostergroup character varying(100) NOT NULL
+CREATE TABLE ofPubsubItem (
+  serviceID           NVARCHAR(100)  NOT NULL,
+  nodeID              NVARCHAR(100)  NOT NULL,
+  id                  NVARCHAR(100)  NOT NULL,
+  jid                 NVARCHAR(1024) NOT NULL,
+  creationDate        CHAR(15)       NOT NULL,
+  payload             NTEXT          NULL,
+  CONSTRAINT ofPubsubItem_pk PRIMARY KEY (serviceID, nodeID, id)
 );
 
-
-ALTER TABLE public.ofpubsubnodegroups OWNER TO openfire;
-
---
--- Name: ofpubsubnodejids; Type: TABLE; Schema: public; Owner: openfire
---
-
-CREATE TABLE public.ofpubsubnodejids (
-    serviceid character varying(100) NOT NULL,
-    nodeid character varying(100) NOT NULL,
-    jid character varying(1024) NOT NULL,
-    associationtype character varying(20) NOT NULL
+CREATE TABLE ofPubsubSubscription (
+  serviceID           NVARCHAR(100)  NOT NULL,
+  nodeID              NVARCHAR(100)  NOT NULL,
+  id                  NVARCHAR(100)  NOT NULL,
+  jid                 NVARCHAR(1024) NOT NULL,
+  owner               NVARCHAR(1024) NOT NULL,
+  state               NVARCHAR(15)   NOT NULL,
+  deliver             INT            NOT NULL,
+  digest              INT            NOT NULL,
+  digest_frequency    INT            NOT NULL,
+  expire              CHAR(15)       NULL,
+  includeBody         INT            NOT NULL,
+  showValues          NVARCHAR(30)   NOT NULL,
+  subscriptionType    NVARCHAR(10)   NOT NULL,
+  subscriptionDepth   INT            NOT NULL,
+  keyword             NVARCHAR(200)  NULL,
+  CONSTRAINT ofPubsubSubscription_pk PRIMARY KEY (serviceID, nodeID, id)
 );
 
-
-ALTER TABLE public.ofpubsubnodejids OWNER TO openfire;
-
---
--- Name: ofpubsubsubscription; Type: TABLE; Schema: public; Owner: openfire
---
-
-CREATE TABLE public.ofpubsubsubscription (
-    serviceid character varying(100) NOT NULL,
-    nodeid character varying(100) NOT NULL,
-    id character varying(100) NOT NULL,
-    jid character varying(1024) NOT NULL,
-    owner character varying(1024) NOT NULL,
-    state character varying(15) NOT NULL,
-    deliver integer NOT NULL,
-    digest integer NOT NULL,
-    digest_frequency integer NOT NULL,
-    expire character(15),
-    includebody integer NOT NULL,
-    showvalues character varying(30) NOT NULL,
-    subscriptiontype character varying(10) NOT NULL,
-    subscriptiondepth integer NOT NULL,
-    keyword character varying(200)
+CREATE TABLE ofPubsubDefaultConf (
+  serviceID           NVARCHAR(100) NOT NULL,
+  leaf                INT           NOT NULL,
+  deliverPayloads     INT           NOT NULL,
+  maxPayloadSize      INT           NOT NULL,
+  persistItems        INT           NOT NULL,
+  maxItems            INT           NOT NULL,
+  notifyConfigChanges INT           NOT NULL,
+  notifyDelete        INT           NOT NULL,
+  notifyRetract       INT           NOT NULL,
+  presenceBased       INT           NOT NULL,
+  sendItemSubscribe   INT           NOT NULL,
+  publisherModel      NVARCHAR(15)  NOT NULL,
+  subscriptionEnabled INT           NOT NULL,
+  accessModel         NVARCHAR(10)  NOT NULL,
+  language            NVARCHAR(255) NULL,
+  replyPolicy         NVARCHAR(15)  NULL,
+  associationPolicy   NVARCHAR(15)  NOT NULL,
+  maxLeafNodes        INT           NOT NULL,
+  CONSTRAINT ofPubsubDefaultConf_pk PRIMARY KEY (serviceID, leaf)
 );
 
+INSERT INTO ofVersion (name, version) VALUES ('openfire', 34);
 
-ALTER TABLE public.ofpubsubsubscription OWNER TO openfire;
+/* Entry for admin user */
+INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modificationDate)
+    VALUES ('admin', 'admin', 'Administrator', 'admin@example.com', '0', '0');
 
---
--- Name: ofremoteserverconf; Type: TABLE; Schema: public; Owner: openfire
---
+/* Entry for default conference service */
+INSERT INTO ofMucService (serviceID, subdomain, isHidden) VALUES 
+(1, 'conference', 0);
 
-CREATE TABLE public.ofremoteserverconf (
-    xmppdomain character varying(255) NOT NULL,
-    remoteport integer,
-    permission character varying(10) NOT NULL
-);
 
+INSERT INTO ofid (idtype, id) VALUES
+(18, 11),
+(19, 1),
+(26, 2),
+(23, 6),
+(27, 51),
+(25, 7);
 
-ALTER TABLE public.ofremoteserverconf OWNER TO openfire;
+INSERT INTO ofmucaffiliation (roomid, jid, affiliation) VALUES
+(1, 'admin@xmpp.localhost.example', 10),
+(2, 'admin@xmpp.localhost.example', 10);
 
---
--- Name: ofroster; Type: TABLE; Schema: public; Owner: openfire
---
 
-CREATE TABLE public.ofroster (
-    rosterid integer NOT NULL,
-    username character varying(64) NOT NULL,
-    jid character varying(1024) NOT NULL,
-    sub integer NOT NULL,
-    ask integer NOT NULL,
-    recv integer NOT NULL,
-    nick character varying(255)
-);
+INSERT INTO ofmucconversationlog (roomid, messageid, sender, nickname, logtime, subject, body, stanza) VALUES
+(1, 1, 'muc1@conference.xmpp.localhost.example', NULL, 001605193216988, NULL, '', '<message type="groupchat" from="muc1@conference.xmpp.localhost.example" to="muc1@conference.xmpp.localhost.example"><subject></subject></message>'),
+(2, 2, 'muc2@conference.xmpp.localhost.example', NULL, 001605193235014, NULL, '', '<message type="groupchat" from="muc2@conference.xmpp.localhost.example" to="muc2@conference.xmpp.localhost.example"><subject></subject></message>');
 
 
-ALTER TABLE public.ofroster OWNER TO openfire;
+INSERT INTO ofmucroom (serviceid, roomid, creationdate, modificationdate, name, naturalname, description, lockeddate, emptydate, canchangesubject, maxusers, publicroom, moderated, membersonly, caninvite, roompassword, candiscoverjid, logenabled, subject, rolestobroadcast, usereservednick, canchangenick, canregister, allowpm, fmucenabled, fmucoutboundnode, fmucoutboundmode, fmucinboundnodes) VALUES
+(1, 1, 001605193216969, 001605193216979, 'muc1', 'MUC One', 'First MUC room', 000000000000000, NULL, 0, 30, 1, 0, 0, 0, NULL, 1, 1, '', 7, 0, 1, 1, 0, 0, NULL, NULL, NULL),
+(1, 2, 001605193235007, 001605193235010, 'muc2', 'MUC Two', 'Second MUC room', 000000000000000, NULL, 0, 30, 1, 0, 0, 0, NULL, 1, 1, '', 7, 0, 1, 1, 0, 0, NULL, NULL, NULL);
 
---
--- Name: ofrostergroups; Type: TABLE; Schema: public; Owner: openfire
---
 
-CREATE TABLE public.ofrostergroups (
-    rosterid integer NOT NULL,
-    rank integer NOT NULL,
-    groupname character varying(255) NOT NULL
-);
+INSERT INTO ofproperty (name, propvalue, encrypted, iv) VALUES
+('xmpp.socket.ssl.active', 'true', 0, NULL),
+('provider.admin.className', 'org.jivesoftware.openfire.admin.DefaultAdminProvider', 0, NULL),
+('xmpp.domain', 'xmpp.localhost.example', 0, NULL),
+('xmpp.auth.anonymous', 'false', 0, NULL),
+('provider.auth.className', 'org.jivesoftware.openfire.auth.DefaultAuthProvider', 0, NULL),
+('provider.lockout.className', 'org.jivesoftware.openfire.lockout.DefaultLockOutProvider', 0, NULL),
+('provider.group.className', 'org.jivesoftware.openfire.group.DefaultGroupProvider', 0, NULL),
+('provider.vcard.className', 'org.jivesoftware.openfire.vcard.DefaultVCardProvider', 0, NULL),
+('provider.securityAudit.className', 'org.jivesoftware.openfire.security.DefaultSecurityAuditProvider', 0, NULL),
+('provider.user.className', 'org.jivesoftware.openfire.user.DefaultUserProvider', 0, NULL),
+('passwordKey', 'YJ1nKWyrMeGvTKu', 0, NULL),
+('update.lastCheck', '1605956807055', 0, NULL);
 
 
-ALTER TABLE public.ofrostergroups OWNER TO openfire;
+INSERT INTO ofpubsubaffiliation (serviceid, nodeid, jid, affiliation) VALUES
+('pubsub', '', 'xmpp.localhost.example', 'owner');
 
---
--- Name: ofsaslauthorized; Type: TABLE; Schema: public; Owner: openfire
---
 
-CREATE TABLE public.ofsaslauthorized (
-    username character varying(64) NOT NULL,
-    principal character varying(4000) NOT NULL
-);
+INSERT INTO ofpubsubdefaultconf (serviceid, leaf, deliverpayloads, maxpayloadsize, persistitems, maxitems, notifyconfigchanges, notifydelete, notifyretract, presencebased, senditemsubscribe, publishermodel, subscriptionenabled, accessmodel, language, replypolicy, associationpolicy, maxleafnodes) VALUES
+('pubsub', 1, 1, 10485760, 0, 1, 1, 1, 1, 0, 1, 'publishers', 1, 'open', 'English', NULL, 'all', -1),
+('pubsub', 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 'publishers', 1, 'open', 'English', NULL, 'all', -1);
 
 
-ALTER TABLE public.ofsaslauthorized OWNER TO openfire;
+INSERT INTO ofpubsubnode (serviceid, nodeid, leaf, creationdate, modificationdate, parent, deliverpayloads, maxpayloadsize, persistitems, maxitems, notifyconfigchanges, notifydelete, notifyretract, presencebased, senditemsubscribe, publishermodel, subscriptionenabled, configsubscription, accessmodel, payloadtype, bodyxslt, dataformxslt, creator, description, language, name, replypolicy, associationpolicy, maxleafnodes) VALUES
+('pubsub', '', 0, 001605193079586, 001605193079586, NULL, 0, 0, 0, 0, 1, 1, 1, 0, 0, 'publishers', 1, 0, 'open', '', '', '', 'xmpp.localhost.example', '', 'English', '', NULL, 'all', -1)
 
---
--- Name: ofsecurityauditlog; Type: TABLE; Schema: public; Owner: openfire
---
 
-CREATE TABLE public.ofsecurityauditlog (
-    msgid integer NOT NULL,
-    username character varying(64) NOT NULL,
-    entrystamp bigint NOT NULL,
-    summary character varying(255) NOT NULL,
-    node character varying(255) NOT NULL,
-    details text
-);
+INSERT INTO ofroster (rosterid, username, jid, sub, ask, recv, nick) VALUES
+(1, 'user3', 'user1@xmpp.localhost.example', 3, -1, -1, 'user1'),
+(2, 'user1', 'user3@xmpp.localhost.example', 3, -1, -1, 'user3'),
+(3, 'user2', 'user1@xmpp.localhost.example', 3, -1, -1, 'user1'),
+(4, 'user1', 'user2@xmpp.localhost.example', 3, -1, -1, 'user2'),
+(5, 'user2', 'user3@xmpp.localhost.example', 3, -1, -1, 'user3'),
+(6, 'user3', 'user2@xmpp.localhost.example', 3, -1, -1, 'user2');
 
 
-ALTER TABLE public.ofsecurityauditlog OWNER TO openfire;
+INSERT INTO ofrostergroups (rosterid, rank, groupname) VALUES
+(1, 0, 'Friends'),
+(2, 0, 'Friends'),
+(3, 0, 'Friends'),
+(4, 0, 'Friends'),
+(5, 0, 'Friends'),
+(6, 0, 'Friends');
 
---
--- Name: ofuser; Type: TABLE; Schema: public; Owner: openfire
---
 
-CREATE TABLE public.ofuser (
-    username character varying(64) NOT NULL,
-    storedkey character varying(32),
-    serverkey character varying(32),
-    salt character varying(32),
-    iterations integer,
-    plainpassword character varying(32),
-    encryptedpassword character varying(255),
-    name character varying(100),
-    email character varying(100),
-    creationdate character(15) NOT NULL,
-    modificationdate character(15) NOT NULL
-);
+INSERT INTO ofsecurityauditlog (msgid, username, entrystamp, summary, node, details) VALUES
+(1, 'admin', 1605193086180, 'Successful admin console login attempt', 'xmpp1.localhost.example', 'The user logged in successfully to the admin console from address 172.60.0.1.'), 
+(2, 'admin', 1605193167191, 'created new user ''user1''', 'xmpp1.localhost.example', 'name = User One, email = null, admin = false'),
+(3, 'admin', 1605193178661, 'created new user ''user2''', 'xmpp1.localhost.example', 'name = User Two, email = null, admin = false'),
+(4, 'admin', 1605193216992, 'created new MUC room muc1', 'xmpp1.localhost.example', 'subject = '''',roomdesc = First MUC room, roomname = MUC One, maxusers = 30'),
+(5, 'admin', 1605193235018, 'created new MUC room muc2', 'xmpp1.localhost.example', 'subject = '''',roomdesc = Second MUC room, roomname = MUC Two, maxusers = 30'),
+(6, 'admin', 1605957429200, 'created new user ''user3''', 'xmpp2.localhost.example', 'name = null, email = null, admin = false');
 
 
-ALTER TABLE public.ofuser OWNER TO openfire;
-
---
--- Name: ofuserflag; Type: TABLE; Schema: public; Owner: openfire
---
-
-CREATE TABLE public.ofuserflag (
-    username character varying(64) NOT NULL,
-    name character varying(100) NOT NULL,
-    starttime character(15),
-    endtime character(15)
-);
-
-
-ALTER TABLE public.ofuserflag OWNER TO openfire;
-
---
--- Name: ofuserprop; Type: TABLE; Schema: public; Owner: openfire
---
-
-CREATE TABLE public.ofuserprop (
-    username character varying(64) NOT NULL,
-    name character varying(100) NOT NULL,
-    propvalue text NOT NULL
-);
-
-
-ALTER TABLE public.ofuserprop OWNER TO openfire;
-
---
--- Name: ofvcard; Type: TABLE; Schema: public; Owner: openfire
---
-
-CREATE TABLE public.ofvcard (
-    username character varying(64) NOT NULL,
-    vcard text NOT NULL
-);
-
-
-ALTER TABLE public.ofvcard OWNER TO openfire;
-
---
--- Name: ofversion; Type: TABLE; Schema: public; Owner: openfire
---
-
-CREATE TABLE public.ofversion (
-    name character varying(50) NOT NULL,
-    version integer NOT NULL
-);
-
-
-ALTER TABLE public.ofversion OWNER TO openfire;
-
---
--- Data for Name: ofextcomponentconf; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofextcomponentconf (subdomain, wildcard, secret, permission) FROM stdin;
-\.
-
-
---
--- Data for Name: ofgroup; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofgroup (groupname, description) FROM stdin;
-\.
-
-
---
--- Data for Name: ofgroupprop; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofgroupprop (groupname, name, propvalue) FROM stdin;
-\.
-
-
---
--- Data for Name: ofgroupuser; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofgroupuser (groupname, username, administrator) FROM stdin;
-\.
-
-
---
--- Data for Name: ofid; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofid (idtype, id) FROM stdin;
-18	11
-19	1
-26	2
-23	6
-27	51
-25	7
-\.
-
-
---
--- Data for Name: ofmucaffiliation; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofmucaffiliation (roomid, jid, affiliation) FROM stdin;
-1	admin@xmpp.localhost.example	10
-2	admin@xmpp.localhost.example	10
-\.
-
-
---
--- Data for Name: ofmucconversationlog; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofmucconversationlog (roomid, messageid, sender, nickname, logtime, subject, body, stanza) FROM stdin;
-1	1	muc1@conference.xmpp.localhost.example	\N	001605193216988		\N	<message type="groupchat" from="muc1@conference.xmpp.localhost.example" to="muc1@conference.xmpp.localhost.example"><subject></subject></message>
-2	2	muc2@conference.xmpp.localhost.example	\N	001605193235014		\N	<message type="groupchat" from="muc2@conference.xmpp.localhost.example" to="muc2@conference.xmpp.localhost.example"><subject></subject></message>
-\.
-
-
---
--- Data for Name: ofmucmember; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofmucmember (roomid, jid, nickname, firstname, lastname, url, email, faqentry) FROM stdin;
-\.
-
-
---
--- Data for Name: ofmucroom; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofmucroom (serviceid, roomid, creationdate, modificationdate, name, naturalname, description, lockeddate, emptydate, canchangesubject, maxusers, publicroom, moderated, membersonly, caninvite, roompassword, candiscoverjid, logenabled, subject, rolestobroadcast, usereservednick, canchangenick, canregister, allowpm, fmucenabled, fmucoutboundnode, fmucoutboundmode, fmucinboundnodes) FROM stdin;
-1	1	001605193216969	001605193216979	muc1	MUC One	First MUC room	000000000000000	\N	0	30	1	0	0	0	\N	1	1		7	0	1	1	0	0	\N	\N	\N
-1	2	001605193235007	001605193235010	muc2	MUC Two	Second MUC room	000000000000000	\N	0	30	1	0	0	0	\N	1	1		7	0	1	1	0	0	\N	\N	\N
-\.
-
-
---
--- Data for Name: ofmucroomprop; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofmucroomprop (roomid, name, propvalue) FROM stdin;
-\.
-
-
---
--- Data for Name: ofmucservice; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofmucservice (serviceid, subdomain, description, ishidden) FROM stdin;
-1	conference	\N	0
-\.
-
-
---
--- Data for Name: ofmucserviceprop; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofmucserviceprop (serviceid, name, propvalue) FROM stdin;
-\.
-
-
---
--- Data for Name: ofoffline; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofoffline (username, messageid, creationdate, messagesize, stanza) FROM stdin;
-\.
-
-
---
--- Data for Name: ofpresence; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofpresence (username, offlinepresence, offlinedate) FROM stdin;
-\.
-
-
---
--- Data for Name: ofprivacylist; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofprivacylist (username, name, isdefault, list) FROM stdin;
-\.
-
-
---
--- Data for Name: ofproperty; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofproperty (name, propvalue, encrypted, iv) FROM stdin;
-xmpp.socket.ssl.active	true	0	\N
-provider.admin.className	org.jivesoftware.openfire.admin.DefaultAdminProvider	0	\N
-xmpp.domain	xmpp.localhost.example	0	\N
-xmpp.auth.anonymous	false	0	\N
-provider.auth.className	org.jivesoftware.openfire.auth.DefaultAuthProvider	0	\N
-provider.lockout.className	org.jivesoftware.openfire.lockout.DefaultLockOutProvider	0	\N
-provider.group.className	org.jivesoftware.openfire.group.DefaultGroupProvider	0	\N
-provider.vcard.className	org.jivesoftware.openfire.vcard.DefaultVCardProvider	0	\N
-provider.securityAudit.className	org.jivesoftware.openfire.security.DefaultSecurityAuditProvider	0	\N
-provider.user.className	org.jivesoftware.openfire.user.DefaultUserProvider	0	\N
-passwordKey	YJ1nKWyrMeGvTKu	0	\N
-update.lastCheck	1605956807055	0	\N
-\.
-
-
---
--- Data for Name: ofpubsubaffiliation; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofpubsubaffiliation (serviceid, nodeid, jid, affiliation) FROM stdin;
-pubsub		xmpp.localhost.example	owner
-\.
-
-
---
--- Data for Name: ofpubsubdefaultconf; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofpubsubdefaultconf (serviceid, leaf, deliverpayloads, maxpayloadsize, persistitems, maxitems, notifyconfigchanges, notifydelete, notifyretract, presencebased, senditemsubscribe, publishermodel, subscriptionenabled, accessmodel, language, replypolicy, associationpolicy, maxleafnodes) FROM stdin;
-pubsub	1	1	10485760	0	1	1	1	1	0	1	publishers	1	open	English	\N	all	-1
-pubsub	0	0	0	0	0	1	1	1	0	0	publishers	1	open	English	\N	all	-1
-\.
-
-
---
--- Data for Name: ofpubsubitem; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofpubsubitem (serviceid, nodeid, id, jid, creationdate, payload) FROM stdin;
-\.
-
-
---
--- Data for Name: ofpubsubnode; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofpubsubnode (serviceid, nodeid, leaf, creationdate, modificationdate, parent, deliverpayloads, maxpayloadsize, persistitems, maxitems, notifyconfigchanges, notifydelete, notifyretract, presencebased, senditemsubscribe, publishermodel, subscriptionenabled, configsubscription, accessmodel, payloadtype, bodyxslt, dataformxslt, creator, description, language, name, replypolicy, associationpolicy, maxleafnodes) FROM stdin;
-pubsub		0	001605193079586	001605193079586	\N	0	0	0	0	1	1	1	0	0	publishers	1	0	open				xmpp.localhost.example		English		\N	all	-1
-\.
-
-
---
--- Data for Name: ofpubsubnodegroups; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofpubsubnodegroups (serviceid, nodeid, rostergroup) FROM stdin;
-\.
-
-
---
--- Data for Name: ofpubsubnodejids; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofpubsubnodejids (serviceid, nodeid, jid, associationtype) FROM stdin;
-\.
-
-
---
--- Data for Name: ofpubsubsubscription; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofpubsubsubscription (serviceid, nodeid, id, jid, owner, state, deliver, digest, digest_frequency, expire, includebody, showvalues, subscriptiontype, subscriptiondepth, keyword) FROM stdin;
-\.
-
-
---
--- Data for Name: ofremoteserverconf; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofremoteserverconf (xmppdomain, remoteport, permission) FROM stdin;
-\.
-
-
---
--- Data for Name: ofroster; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofroster (rosterid, username, jid, sub, ask, recv, nick) FROM stdin;
-1	user3	user1@xmpp.localhost.example	3	-1	-1	user1
-2	user1	user3@xmpp.localhost.example	3	-1	-1	user3
-3	user2	user1@xmpp.localhost.example	3	-1	-1	user1
-4	user1	user2@xmpp.localhost.example	3	-1	-1	user2
-5	user2	user3@xmpp.localhost.example	3	-1	-1	user3
-6	user3	user2@xmpp.localhost.example	3	-1	-1	user2
-\.
-
-
---
--- Data for Name: ofrostergroups; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofrostergroups (rosterid, rank, groupname) FROM stdin;
-1	0	Friends
-2	0	Friends
-3	0	Friends
-4	0	Friends
-5	0	Friends
-6	0	Friends
-\.
-
-
---
--- Data for Name: ofsaslauthorized; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofsaslauthorized (username, principal) FROM stdin;
-\.
-
-
---
--- Data for Name: ofsecurityauditlog; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofsecurityauditlog (msgid, username, entrystamp, summary, node, details) FROM stdin;
-1	admin	1605193086180	Successful admin console login attempt	xmpp1.localhost.example	The user logged in successfully to the admin console from address 172.60.0.1. 
-2	admin	1605193167191	created new user user1	xmpp1.localhost.example	name = User One, email = null, admin = false
-3	admin	1605193178661	created new user user2	xmpp1.localhost.example	name = User Two, email = null, admin = false
-4	admin	1605193216992	created new MUC room muc1	xmpp1.localhost.example	subject = \nroomdesc = First MUC room\nroomname = MUC One\nmaxusers = 30
-5	admin	1605193235018	created new MUC room muc2	xmpp1.localhost.example	subject = \nroomdesc = Second MUC room\nroomname = MUC Two\nmaxusers = 30
-6	admin	1605957429200	created new user user3	xmpp2.localhost.example	name = null, email = null, admin = false
-\.
-
-
---
--- Data for Name: ofuser; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofuser (username, storedkey, serverkey, salt, iterations, plainpassword, encryptedpassword, name, email, creationdate, modificationdate) FROM stdin;
-admin	\N	\N	\N	\N	admin	\N	Administrator	admin@example.com	0              	0              
-user1	bwwYjdvCySlDbPP8ThRhIRPNIsg=	kghyw1bnKARQIQFnq1ro4EeC24s=	2q5Haus5PeiKO6T0U7BWPW6p+6B2xNPv	4096	\N	d8835ca5c85385d31b06e30d0479559f241d3c6c9bfe37b5a2ee228a258a73b8	User One	\N	001605193167159	001605193167159
-user2	qQZJ/YRNwP4ongfV375LPUlDkeE=	t0pnVWMK/9MAEBGYka0bNJfYe/Q=	nl9R20qgvMHcet0lZVPFuzH0gVs32naO	4096	\N	58af7cf2b2717559f2d4a8b642257fbbb5f60763989294d1698e647b332d8ca7	User Two	\N	001605193178643	001605193178643
-user3	+03PBnVHvhdMSRRT5QBvcKkEzQE=	75I3lmGj2CYHQhKd76wrXltXqBA=	LDmgafUpzJd2N2RlYH8S8Rd/wXDM/h4w	4096	\N	03ffc319cac75a3da02777e376f09e4a13fe7d654cdc291a7a55f3792738d65c	User Three	\N	001605957429153	001605957429153
-\.
-
-
---
--- Data for Name: ofuserflag; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofuserflag (username, name, starttime, endtime) FROM stdin;
-\.
-
-
---
--- Data for Name: ofuserprop; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofuserprop (username, name, propvalue) FROM stdin;
-\.
-
-
---
--- Data for Name: ofvcard; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofvcard (username, vcard) FROM stdin;
-\.
-
-
---
--- Data for Name: ofversion; Type: TABLE DATA; Schema: public; Owner: openfire
---
-
-COPY public.ofversion (name, version) FROM stdin;
-openfire	32
-\.
-
-
---
--- Name: ofextcomponentconf ofextcomponentconf_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofextcomponentconf
-    ADD CONSTRAINT ofextcomponentconf_pk PRIMARY KEY (subdomain);
-
-
---
--- Name: ofgroup ofgroup_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofgroup
-    ADD CONSTRAINT ofgroup_pk PRIMARY KEY (groupname);
-
-
---
--- Name: ofgroupprop ofgroupprop_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofgroupprop
-    ADD CONSTRAINT ofgroupprop_pk PRIMARY KEY (groupname, name);
-
-
---
--- Name: ofgroupuser ofgroupuser_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofgroupuser
-    ADD CONSTRAINT ofgroupuser_pk PRIMARY KEY (groupname, username, administrator);
-
-
---
--- Name: ofid ofid_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofid
-    ADD CONSTRAINT ofid_pk PRIMARY KEY (idtype);
-
-
---
--- Name: ofmucaffiliation ofmucaffiliation_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofmucaffiliation
-    ADD CONSTRAINT ofmucaffiliation_pk PRIMARY KEY (roomid, jid);
-
-
---
--- Name: ofmucmember ofmucmember_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofmucmember
-    ADD CONSTRAINT ofmucmember_pk PRIMARY KEY (roomid, jid);
-
-
---
--- Name: ofmucroom ofmucroom_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofmucroom
-    ADD CONSTRAINT ofmucroom_pk PRIMARY KEY (serviceid, name);
-
-
---
--- Name: ofmucroomprop ofmucroomprop_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofmucroomprop
-    ADD CONSTRAINT ofmucroomprop_pk PRIMARY KEY (roomid, name);
-
-
---
--- Name: ofmucservice ofmucservice_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofmucservice
-    ADD CONSTRAINT ofmucservice_pk PRIMARY KEY (subdomain);
-
-
---
--- Name: ofmucserviceprop ofmucserviceprop_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofmucserviceprop
-    ADD CONSTRAINT ofmucserviceprop_pk PRIMARY KEY (serviceid, name);
-
-
---
--- Name: ofoffline ofoffline_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofoffline
-    ADD CONSTRAINT ofoffline_pk PRIMARY KEY (username, messageid);
-
-
---
--- Name: ofpresence ofpresence_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofpresence
-    ADD CONSTRAINT ofpresence_pk PRIMARY KEY (username);
-
-
---
--- Name: ofprivacylist ofprivacylist_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofprivacylist
-    ADD CONSTRAINT ofprivacylist_pk PRIMARY KEY (username, name);
-
-
---
--- Name: ofproperty ofproperty_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofproperty
-    ADD CONSTRAINT ofproperty_pk PRIMARY KEY (name);
-
-
---
--- Name: ofpubsubaffiliation ofpubsubaffiliation_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofpubsubaffiliation
-    ADD CONSTRAINT ofpubsubaffiliation_pk PRIMARY KEY (serviceid, nodeid, jid);
-
-
---
--- Name: ofpubsubdefaultconf ofpubsubdefaultconf_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofpubsubdefaultconf
-    ADD CONSTRAINT ofpubsubdefaultconf_pk PRIMARY KEY (serviceid, leaf);
-
-
---
--- Name: ofpubsubitem ofpubsubitem_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofpubsubitem
-    ADD CONSTRAINT ofpubsubitem_pk PRIMARY KEY (serviceid, nodeid, id);
-
-
---
--- Name: ofpubsubnode ofpubsubnode_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofpubsubnode
-    ADD CONSTRAINT ofpubsubnode_pk PRIMARY KEY (serviceid, nodeid);
-
-
---
--- Name: ofpubsubnodejids ofpubsubnodejids_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofpubsubnodejids
-    ADD CONSTRAINT ofpubsubnodejids_pk PRIMARY KEY (serviceid, nodeid, jid);
-
-
---
--- Name: ofpubsubsubscription ofpubsubsubscription_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofpubsubsubscription
-    ADD CONSTRAINT ofpubsubsubscription_pk PRIMARY KEY (serviceid, nodeid, id);
-
-
---
--- Name: ofremoteserverconf ofremoteserverconf_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofremoteserverconf
-    ADD CONSTRAINT ofremoteserverconf_pk PRIMARY KEY (xmppdomain);
-
-
---
--- Name: ofroster ofroster_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofroster
-    ADD CONSTRAINT ofroster_pk PRIMARY KEY (rosterid);
-
-
---
--- Name: ofrostergroups ofrostergroups_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofrostergroups
-    ADD CONSTRAINT ofrostergroups_pk PRIMARY KEY (rosterid, rank);
-
-
---
--- Name: ofsaslauthorized ofsaslauthorized_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofsaslauthorized
-    ADD CONSTRAINT ofsaslauthorized_pk PRIMARY KEY (username, principal);
-
-
---
--- Name: ofsecurityauditlog ofsecurityauditlog_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofsecurityauditlog
-    ADD CONSTRAINT ofsecurityauditlog_pk PRIMARY KEY (msgid);
-
-
---
--- Name: ofuser ofuser_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofuser
-    ADD CONSTRAINT ofuser_pk PRIMARY KEY (username);
-
-
---
--- Name: ofuserflag ofuserflag_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofuserflag
-    ADD CONSTRAINT ofuserflag_pk PRIMARY KEY (username, name);
-
-
---
--- Name: ofuserprop ofuserprop_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofuserprop
-    ADD CONSTRAINT ofuserprop_pk PRIMARY KEY (username, name);
-
-
---
--- Name: ofvcard ofvcard_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofvcard
-    ADD CONSTRAINT ofvcard_pk PRIMARY KEY (username);
-
-
---
--- Name: ofversion ofversion_pk; Type: CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofversion
-    ADD CONSTRAINT ofversion_pk PRIMARY KEY (name);
-
-
---
--- Name: ofmucconversationlog_msg_id; Type: INDEX; Schema: public; Owner: openfire
---
-
-CREATE INDEX ofmucconversationlog_msg_id ON public.ofmucconversationlog USING btree (messageid);
-
-
---
--- Name: ofmucconversationlog_time_idx; Type: INDEX; Schema: public; Owner: openfire
---
-
-CREATE INDEX ofmucconversationlog_time_idx ON public.ofmucconversationlog USING btree (logtime);
-
-
---
--- Name: ofmucroom_roomid_idx; Type: INDEX; Schema: public; Owner: openfire
---
-
-CREATE INDEX ofmucroom_roomid_idx ON public.ofmucroom USING btree (roomid);
-
-
---
--- Name: ofmucroom_serviceid_idx; Type: INDEX; Schema: public; Owner: openfire
---
-
-CREATE INDEX ofmucroom_serviceid_idx ON public.ofmucroom USING btree (serviceid);
-
-
---
--- Name: ofmucservice_serviceid_idx; Type: INDEX; Schema: public; Owner: openfire
---
-
-CREATE INDEX ofmucservice_serviceid_idx ON public.ofmucservice USING btree (serviceid);
-
-
---
--- Name: ofprivacylist_default_idx; Type: INDEX; Schema: public; Owner: openfire
---
-
-CREATE INDEX ofprivacylist_default_idx ON public.ofprivacylist USING btree (username, isdefault);
-
-
---
--- Name: ofpubsubnodegroups_idx; Type: INDEX; Schema: public; Owner: openfire
---
-
-CREATE INDEX ofpubsubnodegroups_idx ON public.ofpubsubnodegroups USING btree (serviceid, nodeid);
-
-
---
--- Name: ofroster_jid_idx; Type: INDEX; Schema: public; Owner: openfire
---
-
-CREATE INDEX ofroster_jid_idx ON public.ofroster USING btree (jid);
-
-
---
--- Name: ofroster_username_idx; Type: INDEX; Schema: public; Owner: openfire
---
-
-CREATE INDEX ofroster_username_idx ON public.ofroster USING btree (username);
-
-
---
--- Name: ofrostergroups_rosterid_idx; Type: INDEX; Schema: public; Owner: openfire
---
-
-CREATE INDEX ofrostergroups_rosterid_idx ON public.ofrostergroups USING btree (rosterid);
-
-
---
--- Name: ofsecurityauditlog_tstamp_idx; Type: INDEX; Schema: public; Owner: openfire
---
-
-CREATE INDEX ofsecurityauditlog_tstamp_idx ON public.ofsecurityauditlog USING btree (entrystamp);
-
-
---
--- Name: ofsecurityauditlog_uname_idx; Type: INDEX; Schema: public; Owner: openfire
---
-
-CREATE INDEX ofsecurityauditlog_uname_idx ON public.ofsecurityauditlog USING btree (username);
-
-
---
--- Name: ofuser_cdate_idx; Type: INDEX; Schema: public; Owner: openfire
---
-
-CREATE INDEX ofuser_cdate_idx ON public.ofuser USING btree (creationdate);
-
-
---
--- Name: ofuserflag_etime_idx; Type: INDEX; Schema: public; Owner: openfire
---
-
-CREATE INDEX ofuserflag_etime_idx ON public.ofuserflag USING btree (endtime);
-
-
---
--- Name: ofuserflag_stime_idx; Type: INDEX; Schema: public; Owner: openfire
---
-
-CREATE INDEX ofuserflag_stime_idx ON public.ofuserflag USING btree (starttime);
-
-
---
--- Name: ofrostergroups ofrostergroups_rosterid_fk; Type: FK CONSTRAINT; Schema: public; Owner: openfire
---
-
-ALTER TABLE ONLY public.ofrostergroups
-    ADD CONSTRAINT ofrostergroups_rosterid_fk FOREIGN KEY (rosterid) REFERENCES public.ofroster(rosterid) DEFERRABLE INITIALLY DEFERRED;
-
-
---
--- PostgreSQL database dump complete
---
-
+INSERT INTO ofuser (username, storedkey, serverkey, salt, iterations, plainpassword, encryptedpassword, name, email, creationdate, modificationdate) VALUES
+('user1', 'bwwYjdvCySlDbPP8ThRhIRPNIsg=', 'kghyw1bnKARQIQFnq1ro4EeC24s=', '2q5Haus5PeiKO6T0U7BWPW6p+6B2xNPv', 4096, NULL, 'd8835ca5c85385d31b06e30d0479559f241d3c6c9bfe37b5a2ee228a258a73b8', 'User One', NULL, 001605193167159, 001605193167159),
+('user2', 'qQZJ/YRNwP4ongfV375LPUlDkeE=', 't0pnVWMK/9MAEBGYka0bNJfYe/Q=', 'nl9R20qgvMHcet0lZVPFuzH0gVs32naO', 4096, NULL, '58af7cf2b2717559f2d4a8b642257fbbb5f60763989294d1698e647b332d8ca7', 'User Two', NULL, 001605193178643, 001605193178643),
+('user3', '+03PBnVHvhdMSRRT5QBvcKkEzQE=', '75I3lmGj2CYHQhKd76wrXltXqBA=', 'LDmgafUpzJd2N2RlYH8S8Rd/wXDM/h4w', 4096, NULL, '03ffc319cac75a3da02777e376f09e4a13fe7d654cdc291a7a55f3792738d65c', 'User Three', NULL, 001605957429153, 001605957429153);

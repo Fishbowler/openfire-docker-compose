@@ -43,10 +43,10 @@
   </connectionProvider> 
   <database>
     <defaultProvider>
-      <driver>org.postgresql.Driver</driver> 
-      <serverURL>jdbc:postgresql://db:5432/openfire</serverURL> 
-      <username encrypted="true">10d847caed2654fbb1fe6cefac0f381893323ae6b5eea27d31503d5880091fca</username> 
-      <password encrypted="true">30c1893796e0110fc4607c8b1bca0d0e54f10b270c4615d3</password> 
+      <driver>com.microsoft.sqlserver.jdbc.SQLServerDriver</driver> 
+      <serverURL>jdbc:sqlserver://db:1433;databaseName=openfire;applicationName=Openfire</serverURL> 
+      <username>sa</username> 
+      <password>SecurePa55w0rd</password> 
       <testSQL>select 1</testSQL> 
       <testBeforeUse>false</testBeforeUse> 
       <testAfterUse>false</testAfterUse> 

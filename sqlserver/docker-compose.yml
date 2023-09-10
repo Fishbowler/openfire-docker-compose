@@ -28,7 +28,7 @@ services:
     depends_on:
       - "db"
     volumes:
-#      - ./_data/xmpp/conf:/var/lib/openfire/conf
+      - ./_data/xmpp/conf:/var/lib/openfire/conf
       - ./_data/plugins:/opt/plugins
       - ../_common/wait-for-it.sh:/wait-for-it.sh
     command: ["/wait-for-it.sh", "-s", "db:1433", "--", "/sbin/entrypoint.sh"]
