@@ -398,8 +398,8 @@ INSERT INTO ofmucaffiliation (roomid, jid, affiliation) VALUES
 
 
 INSERT INTO ofmucconversationlog (roomid, messageid, sender, nickname, logtime, subject, body, stanza) VALUES
-(1, 1, 'muc1@conference.xmpp.localhost.example', NULL, 001605193216988, NULL, '', '<message type="groupchat" from="muc1@conference.xmpp.localhost.example" to="muc1@conference.xmpp.localhost.example"><subject></subject></message>'),
-(2, 2, 'muc2@conference.xmpp.localhost.example', NULL, 001605193235014, NULL, '', '<message type="groupchat" from="muc2@conference.xmpp.localhost.example" to="muc2@conference.xmpp.localhost.example"><subject></subject></message>');
+(1, 1, 'muc1@conference.xmpp.localhost.example', NULL, '001605193216988', NULL, '', '<message type="groupchat" from="muc1@conference.xmpp.localhost.example" to="muc1@conference.xmpp.localhost.example"><subject></subject></message>'),
+(2, 2, 'muc2@conference.xmpp.localhost.example', NULL, '001605193235014', NULL, '', '<message type="groupchat" from="muc2@conference.xmpp.localhost.example" to="muc2@conference.xmpp.localhost.example"><subject></subject></message>');
 
 
 INSERT INTO ofmucroom (serviceid, roomid, creationdate, modificationdate, name, naturalname, description, lockeddate, emptydate, canchangesubject, maxusers, publicroom, moderated, membersonly, caninvite, roompassword, candiscoverjid, logenabled, subject, rolestobroadcast, usereservednick, canchangenick, canregister, allowpm, fmucenabled, fmucoutboundnode, fmucoutboundmode, fmucinboundnodes) VALUES
