@@ -1,0 +1,32 @@
+services:
+
+  # Connect to jdbc:oracle:thin:@//db:1521/FREEPDB1
+  db:
+    image: gvenzl/oracle-free:23-slim
+    ports:
+      - "1521:1521"
+    environment:
+      - "ORACLE_PASSWORD=secretpassw0rd"
+      - "APP_USER=openfire"
+      - "APP_USER_PASSWORD=hunter2"
+
+  xmpp1:
+    image: "${OPENFIRE_IMAGE}:${OPENFIRE_TAG}"
+    ports:
+      - "5222:5222"
+      - "5269:5269"
+      - "7070:7070"
+      - "7443:7443"
+      - "9090:9090"
+    depends_on:
+      - "db"
+    volumes:
+      - ../_common/wait-for-it.sh:/wait-for-it.sh
+    command: ["/wait-for-it.sh", "-s", "db:1521", "--", "/sbin/entrypoint.sh"]
+
+  dozzle:
+    image: amir20/dozzle:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 9999:8080
